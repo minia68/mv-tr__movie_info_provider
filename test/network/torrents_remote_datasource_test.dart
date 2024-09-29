@@ -1,5 +1,4 @@
-import 'package:domain/domain.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:movie_info_provider/movie_info_provider.dart';
 import 'package:movie_info_provider/src/mdb/mdb_movie_info.dart';
 import 'package:movie_info_provider/src/rating/rating.dart';
@@ -7,35 +6,62 @@ import 'package:movie_info_provider/src/rating/rating_data_source.dart';
 import 'package:movie_info_provider/src/tracker/detail_result.dart';
 import 'package:movie_info_provider/src/tracker/rutor/search_parser.dart';
 import 'package:movie_info_provider/src/tracker/search_result.dart';
-import 'package:movie_info_provider/src/tracker/tracker_datasource.dart';
 import 'package:test/test.dart';
 
 import '../utils.dart';
 
 void main() {
   late MockTrackerDataSource trackerDataSource;
+  late MockTrackerDataSource trackerDataSource2;
   late MockRatingDataSource ratingDataSource;
   late MockMdbDataSource mdbDataSource;
   late MovieInfoProvider ds;
-  final trackerSearchUrl = 'trackerSearchUrl';
+
+  setUpAll(() {
+    registerFallbackValue(SearchResult('detailUrl', DateTime.now()));
+  });
 
   setUp(() {
     trackerDataSource = MockTrackerDataSource();
+    trackerDataSource2 = MockTrackerDataSource();
     ratingDataSource = MockRatingDataSource();
     mdbDataSource = MockMdbDataSource();
     ds = MovieInfoProvider(
-        [trackerDataSource], ratingDataSource, mdbDataSource, [trackerSearchUrl]);
+      [trackerDataSource, trackerDataSource2],
+      ratingDataSource,
+      mdbDataSource,
+    );
   });
 
   test('loadTopSeedersFhdMovies', () async {
-    when(trackerDataSource.search(any)).thenAnswer((_) async => [
+    when(() => trackerDataSource.query).thenReturn('expected');
+    when(() => trackerDataSource2.query).thenReturn('expected1');
+    
+    when(() => trackerDataSource2.search()).thenAnswer((_) async => [
+          SearchResult('detailUrl', DateTime(2020, 1, 1)),
+        ]);
+
+    when(() => trackerDataSource2
+            .getDetail(SearchResult('detailUrl', DateTime(2020, 1, 1))))
+        .thenAnswer((_) async => DetailResult(
+              imdbId: 'imdbId1',
+              kinopoiskId: 'kinopoiskId1',
+              leechers: 31,
+              magnetUrl: 'magnetUrl113423',
+              seeders: 332,
+              size: 33,
+              title: 'titlef',
+              audio: ['1fadsvdsv'],
+            ));
+
+    when(() => trackerDataSource.search()).thenAnswer((_) async => [
           SearchResult('detailUrl', DateTime(2020, 1, 1)),
           SearchResult('detailUrl1', DateTime(2020, 1, 3)),
           SearchResult('detailUrl2', DateTime(2020, 1, 2)),
           SearchResult('detailUrl3', DateTime(2020, 1, 4)),
         ]);
 
-    when(trackerDataSource
+    when(() => trackerDataSource
             .getDetail(SearchResult('detailUrl', DateTime(2020, 1, 1))))
         .thenAnswer((_) async => DetailResult(
               imdbId: 'imdbId',
@@ -47,7 +73,7 @@ void main() {
               title: 'title',
               audio: ['1fadsvdsv', '2sdsdgdsg', '3fjnfjn'],
             ));
-    when(trackerDataSource
+    when(() => trackerDataSource
             .getDetail(SearchResult('detailUrl1', DateTime(2020, 1, 3))))
         .thenAnswer((_) async => DetailResult(
               imdbId: 'imdbId1',
@@ -59,7 +85,7 @@ void main() {
               title: 'title',
               audio: ['1fadsvdsv', '2sdsdgdsg'],
             ));
-    when(trackerDataSource
+    when(() => trackerDataSource
             .getDetail(SearchResult('detailUrl2', DateTime(2020, 1, 2))))
         .thenAnswer((_) async => DetailResult(
               imdbId: 'imdbId',
@@ -71,11 +97,12 @@ void main() {
               title: 'title1',
               audio: ['1fadsvdsv', '2sdsdgdsg'],
             ));
-    when(trackerDataSource
+    when(() => trackerDataSource
             .getDetail(SearchResult('detailUrl3', DateTime(2020, 1, 4))))
         .thenAnswer((_) async => throw SearchParserException('test'));
 
-    when(ratingDataSource.getRating(kinopoiskId: anyNamed('kinopoiskId')))
+    when(() =>
+            ratingDataSource.getRating(kinopoiskId: any(named: 'kinopoiskId')))
         .thenAnswer((_) async => Rating(
               imdbVoteAverage: 1,
               imdbVoteCount: 2,
@@ -83,7 +110,7 @@ void main() {
               kinopoiskVoteCount: 4,
             ));
     var date = DateTime.now();
-    when(mdbDataSource.getMovieInfo('imdbId'))
+    when(() => mdbDataSource.getMovieInfo('imdbId'))
         .thenAnswer((_) async => MdbMovieInfo(
               id: '5',
               posterPath: 'posterPath',
@@ -119,7 +146,7 @@ void main() {
               ],
               youtubeTrailerKey: 'youtubeTrailerKey1',
             ));
-    when(mdbDataSource.getMovieInfo('imdbId1'))
+    when(() => mdbDataSource.getMovieInfo('imdbId1'))
         .thenAnswer((_) async => MdbMovieInfo(
               id: '2',
               releaseDate: null,
@@ -146,71 +173,38 @@ void main() {
     final mi = response[1];
     expect(mi.imdbId, 'imdbId1');
     expect(mi.kinopoiskId, 'kinopoiskId1');
-    expect(mi.torrentsInfo.length, 1);
-    final ti = mi.torrentsInfo[0];
+    expect(mi.torrentsInfo.length, 2);
+    var ti = mi.torrentsInfo[0];
     expect(ti.magnetUrl, 'magnetUrl11');
     expect(ti.seeders, 2);
     expect(ti.size, 3);
     expect(ti.title, 'title');
     expect(ti.leechers, 1);
     expect(ti.date, DateTime(2020, 1, 3));
+    ti = mi.torrentsInfo[1];
+    expect(ti.magnetUrl, 'magnetUrl113423');
+    expect(ti.seeders, 332);
+    expect(ti.size, 33);
+    expect(ti.title, 'titlef');
+    expect(ti.leechers, 31);
+    expect(ti.date, DateTime(2020, 1, 1));
 
-    verify(ratingDataSource.getRating(kinopoiskId: anyNamed('kinopoiskId')))
+    verify(() =>
+            ratingDataSource.getRating(kinopoiskId: any(named: 'kinopoiskId')))
         .called(2);
+    verify(() => trackerDataSource.search()).called(1);
+    verify(() => trackerDataSource.getDetail(any())).called(4);
+    verify(() => trackerDataSource2.search()).called(1);
+    verify(() => trackerDataSource2.getDetail(any())).called(1);
+    verify(() => mdbDataSource.getMovieInfo(any())).called(2);
   });
 }
 
-class MockRemoteDataSource extends Mock implements MovieInfoProvider {
-  @override
-  Future<List<MovieInfo>> getMovies() =>
-      super.noSuchMethod(
-        Invocation.method(#getMovies, []),
-        returnValue: Future.value(<MovieInfo>[]),
-      );
-}
+class MockRemoteDataSource extends Mock implements MovieInfoProvider {}
 
 class MockTrackerDataSource<S extends SearchResult, D extends DetailResult>
-    extends Mock implements TrackerDataSource<S, D> {
-  @override
-  Future<List<S>> search(String? search) => super.noSuchMethod(
-        Invocation.method(#search, [search]),
-        returnValue: Future.value(<S>[]),
-      );
+    extends Mock implements TrackerDataSource<S, D> {}
 
-  @override
-  Future<D> getDetail(S? searchResult) => super.noSuchMethod(
-        Invocation.method(#getDetail, [searchResult]),
-        returnValue: Future.value(DetailResult(
-          audio: [],
-          title: '',
-          kinopoiskId: '',
-          imdbId: '',
-          leechers: 0,
-          magnetUrl: '',
-          seeders: 0,
-          size: 0,
-        )),
-      );
-}
+class MockRatingDataSource extends Mock implements RatingDataSource {}
 
-class MockRatingDataSource extends Mock implements RatingDataSource {
-  @override
-  Future<Rating> getRating({required String? kinopoiskId}) =>
-      super.noSuchMethod(
-        Invocation.method(#getRating, [], {#kinopoiskId: kinopoiskId}),
-        returnValue: Future.value(Rating(
-          imdbVoteAverage: 0,
-          kinopoiskVoteCount: 0,
-          kinopoiskVoteAverage: 0,
-          imdbVoteCount: 0,
-        )),
-      );
-}
-
-class MockMdbDataSource extends Mock implements TmdbDataSource {
-  @override
-  Future<MdbMovieInfo?> getMovieInfo(String? id) => super.noSuchMethod(
-        Invocation.method(#getMovieInfo, [id]),
-        returnValue: Future.value(null),
-      );
-}
+class MockMdbDataSource extends Mock implements TmdbDataSource {}

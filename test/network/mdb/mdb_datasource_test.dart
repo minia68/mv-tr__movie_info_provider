@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:movie_info_provider/src/mdb/tmdb/client.dart';
 import 'package:movie_info_provider/src/mdb/tmdb/configuration_response.dart';
 import 'package:movie_info_provider/src/mdb/tmdb/find_response.dart';
@@ -11,7 +11,7 @@ import 'package:test/test.dart';
 void main() {
   test('getMovieInfo', () async {
     final client = MockClient();
-    when(client.find('1', any, any))
+    when(() => client.find('1', any(), any()))
         .thenAnswer((_) async => FindResponse.fromJson(json.decode('''
 {
   "movie_results": [],
@@ -20,7 +20,7 @@ void main() {
   "tv_episode_results": [],
   "tv_season_results": []
 }''')));
-    when(client.find('2', any, any))
+    when(() => client.find('2', any(), any()))
         .thenAnswer((_) async => FindResponse.fromJson(json.decode('''
 {
   "movie_results": [
@@ -49,7 +49,7 @@ void main() {
   "tv_episode_results": [],
   "tv_season_results": []
 }''')));
-    when(client.getMovie(509967, any))
+    when(() => client.getMovie(509967, any()))
         .thenAnswer((_) async => Movie.fromJson(json.decode('''{
     "adult": false,
     "backdrop_path": "/nRXO2SnOA75OsWhNhXstHB8ZmI3.jpg",
@@ -168,7 +168,7 @@ void main() {
         ]
     }
 }''')));
-    when(client.find('11', any, any))
+    when(() => client.find('11', any(), any()))
         .thenAnswer((_) async => FindResponse.fromJson(json.decode('''
 {
   "movie_results": [
@@ -179,7 +179,7 @@ void main() {
   "tv_episode_results": [],
   "tv_season_results": []
 }''')));
-    when(client.getMovie(509968, any))
+    when(() => client.getMovie(509968, any()))
         .thenAnswer((_) async => Movie.fromJson(json.decode('''{
   "id": 509968,"overview":"","title":"","vote_count":0,"vote_average":0.0,
     "videos": {
@@ -207,7 +207,7 @@ void main() {
         ]
     }
 }''')));
-    when(client.find('111', any, any))
+    when(() => client.find('111', any(), any()))
         .thenAnswer((_) async => FindResponse.fromJson(json.decode('''
 {
   "movie_results": [
@@ -218,7 +218,7 @@ void main() {
   "tv_episode_results": [],
   "tv_season_results": []
 }''')));
-    when(client.getMovie(509969, any))
+    when(() => client.getMovie(509969, any()))
         .thenAnswer((_) async => Movie.fromJson(json.decode('''{
         "id": 509969,"overview":"","title":"","vote_count":0,"vote_average":0.0,
     "videos": {
@@ -281,7 +281,7 @@ void main() {
 
   test('getImageBasePath', () async {
     final client = MockClient();
-    when(client.configuration())
+    when(() => client.configuration())
         .thenAnswer((_) async => ConfigurationResponse.fromJson(json.decode('''
  {
   "images": {
@@ -391,56 +391,4 @@ void main() {
   });
 }
 
-class MockClient extends Mock implements TmdbClient {
-  @override
-  Future<ConfigurationResponse> configuration() => super.noSuchMethod(
-        Invocation.method(#configuration, []),
-        returnValue: Future.value(ConfigurationResponse(
-          images: Images(
-            backdropSizes: [],
-            baseUrl: '',
-            logoSizes: [],
-            posterSizes: [],
-            profileSizes: [],
-            secureBaseUrl: '',
-            stillSizes: [],
-          ),
-        )),
-      );
-
-  @override
-  Future<FindResponse> find(
-          String? externalId, String? language, String? externalSource) =>
-      super.noSuchMethod(
-        Invocation.method(#find, [externalId, language, externalSource]),
-        returnValue: Future.value(FindResponse(movieResults: [])),
-      );
-
-  @override
-  Future<Movie> getMovie(
-    int? movieId,
-    String? language, {
-    String? appendToResponse = 'credits,videos',
-  }) =>
-      super.noSuchMethod(
-        Invocation.method(
-          #getMovie,
-          [movieId, language],
-          {#appendToResponse: appendToResponse},
-        ),
-        returnValue: Future.value(Movie(
-          null,
-          'null',
-          null,
-          0,
-          'null',
-          null,
-          0,
-          0,
-          null,
-          null,
-          null,
-          null,
-        )),
-      );
-}
+class MockClient extends Mock implements TmdbClient {}

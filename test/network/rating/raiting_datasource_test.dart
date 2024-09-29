@@ -1,4 +1,4 @@
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:movie_info_provider/src/html_page_provider.dart';
 import 'package:movie_info_provider/src/rating/kinopoisk_rating_datasource.dart';
 import 'package:movie_info_provider/src/rating/rating.dart';
@@ -7,7 +7,7 @@ import 'package:test/test.dart';
 void main() {
   test('wrong response format', () async {
     final htmlPageProvider = MockHtmlPageProvider();
-    when(htmlPageProvider.call(any)).thenAnswer(
+    when(() => htmlPageProvider.call(any())).thenAnswer(
         (_) async => '<a href="http://imdb.com/title//" target="_blank"></a>');
     final ds = KinopoiskRatingDataSource(htmlPageProvider);
     try {
@@ -20,7 +20,7 @@ void main() {
 
   test('getResult', () async {
     final htmlPageProvider = MockHtmlPageProvider();
-    when(htmlPageProvider.call(any)).thenAnswer((_) async => '''<rating>
+    when(() => htmlPageProvider.call(any())).thenAnswer((_) async => '''<rating>
 <kp_rating num_vote="4079">6.071</kp_rating>
 <imdb_rating num_vote="35233">6.2</imdb_rating>
 </rating>''');
@@ -36,10 +36,4 @@ void main() {
   });
 }
 
-class MockHtmlPageProvider extends Mock implements HtmlPageProvider {
-  @override
-  Future<String> call(String? url) => super.noSuchMethod(
-        Invocation.method(#call, [url]),
-        returnValue: Future.value(''),
-      );
-}
+class MockHtmlPageProvider extends Mock implements HtmlPageProvider {}

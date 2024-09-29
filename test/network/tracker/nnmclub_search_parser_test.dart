@@ -137,7 +137,7 @@ void main() {
     final page = File('test/assets/search_nnmclub.html')
         .readAsStringSync(encoding: Windows1251Codec());
     final searchParser = SearchParser();
-    expect(searchParser.getSearchResults(page, 'null').take(3).toList(), [
+    expect(searchParser.getSearchResults(page, 'null', maxResults: 3), [
       SearchParserResult(
         detailUrl:
             'nullviewtopic.php?t=1747466',

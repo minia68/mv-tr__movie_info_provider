@@ -1,10 +1,13 @@
+import 'dart:math';
+
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' show parse;
 
 import '../search_result.dart';
 
 class SearchParser {
-  List<SearchParserResult> getSearchResults(String page, String baseUrl) {
+  List<SearchParserResult> getSearchResults(
+      String page, String baseUrl, {int? maxResults}) {
     final document = parse(page);
     final index = document.getElementById('index');
     if (index == null) {
@@ -12,7 +15,9 @@ class SearchParser {
     }
     final trs = index.querySelectorAll('tr.gai, tr.tum');
     final result = <SearchParserResult>[];
-    for (var tr in trs) {
+    final length = min(maxResults ?? trs.length, trs.length);
+    for (var i = 0; i < length; i++) {
+      final tr = trs[i];
       final tds = tr.children;
       Element dateElement, mainElement, sizeElement, peersElement;
       if (tds.length == 4) {

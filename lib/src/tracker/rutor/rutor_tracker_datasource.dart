@@ -5,15 +5,18 @@ import 'detail_parser.dart';
 import 'search_parser.dart';
 
 class RutorTrackerDataSource
-    implements TrackerDataSource<SearchParserResult, DetailResult> {
+    extends TrackerDataSource<SearchParserResult, DetailResult> {
   final HtmlPageProvider _htmlPageProvider;
-  final String _baseUrl;
+  final SearchParser? _searchParser;
 
   RutorTrackerDataSource({
     HtmlPageProvider? htmlPageProvider,
-    required String baseUrl,
+    required super.baseUrl,
+    required super.query,
+    super.searchLimit,
+    SearchParser? searchParser,
   })  : _htmlPageProvider = htmlPageProvider ?? DioHtmlPageProvider(),
-        _baseUrl = baseUrl;
+        _searchParser = searchParser;
 
   @override
   Future<DetailResult> getDetail(SearchParserResult searchResult) async {
@@ -33,11 +36,11 @@ class RutorTrackerDataSource
   }
 
   @override
-  Future<List<SearchParserResult>> search(String search) async {
-    final page = await _htmlPageProvider(
-        _baseUrl + (search.startsWith('/') ? search : '/$search'));
-    final searchParser = SearchParser();
-    final result = searchParser.getSearchResults(page, _baseUrl);
+  Future<List<SearchParserResult>> search() async {
+    final page = await _htmlPageProvider(baseUrl + query);
+    final searchParser = _searchParser ?? SearchParser();
+    final result =
+        searchParser.getSearchResults(page, baseUrl, maxResults: searchLimit);
     return result;
   }
 }

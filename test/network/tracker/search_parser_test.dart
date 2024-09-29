@@ -95,7 +95,7 @@ void main() {
   test('getSearchResults', () {
     final page = File('test/assets/search.html').readAsStringSync();
     final searchParser = SearchParser();
-    expect(searchParser.getSearchResults(page, 'null').take(3).toList(), [
+    expect(searchParser.getSearchResults(page, 'null', maxResults: 3), [
       SearchParserResult(
         magnetUrl:
             'magnet:?xt=urn:btih:f81a22449431963302bb72a9bc1a438aea30ba42&dn=rutor.info&tr=udp://opentor.net:6969&tr=http://retracker.local/announce',

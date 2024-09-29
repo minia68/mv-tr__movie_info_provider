@@ -15,10 +15,12 @@ class MovieInfoProvider {
   final List<TrackerDataSource> _trackerDataSources;
   final RatingDataSource _ratingDataSource;
   final MdbDataSource _mdbDataSource;
-  final List<String> _trackerSearchUrls;
 
-  MovieInfoProvider(this._trackerDataSources, this._ratingDataSource,
-      this._mdbDataSource, this._trackerSearchUrls);
+  MovieInfoProvider(
+    this._trackerDataSources,
+    this._ratingDataSource,
+    this._mdbDataSource,
+  );
 
   Future<String?> getImageBasePath() {
     return _mdbDataSource.getImageBasePath();
@@ -28,10 +30,9 @@ class MovieInfoProvider {
     final existing = <MovieInfo>[];
     for (var i = 0; i < _trackerDataSources.length; i++) {
       final _trackerDataSource = _trackerDataSources[i];
-      final _trackerSearchUrl = _trackerSearchUrls[i];
 
-      _logger.fine('start loading tracker search $_trackerSearchUrl');
-      final searchResults = await _trackerDataSource.search(_trackerSearchUrl);
+      _logger.fine('start loading tracker search ${_trackerDataSource.query}');
+      final searchResults = await _trackerDataSource.search();
       _logger.fine('load ${searchResults.length} search results');
 
       for (var searchResult in searchResults) {
@@ -47,11 +48,9 @@ class MovieInfoProvider {
         final movieInfo = existing
             .indexWhere((movieInfo) => movieInfo.imdbId == detailResult.imdbId);
         if (movieInfo != -1) {
-          await _update(
-              searchResult, detailResult, existing[movieInfo]);
+          await _update(searchResult, detailResult, existing[movieInfo]);
         } else {
-          final newMovieInfo =
-              await _create(searchResult, detailResult);
+          final newMovieInfo = await _create(searchResult, detailResult);
           if (newMovieInfo != null) {
             existing.add(newMovieInfo);
           }

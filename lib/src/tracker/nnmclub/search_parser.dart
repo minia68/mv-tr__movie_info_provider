@@ -1,10 +1,13 @@
+import 'dart:math';
+
 import 'package:html/parser.dart' show parse;
 
 import '../search_result.dart';
 
 //https://nnmclub.to/forum/tracker.php?f=954&nm=2160p
 class SearchParser {
-  List<SearchParserResult> getSearchResults(String page, String baseUrl) {
+  List<SearchParserResult> getSearchResults(
+      String page, String baseUrl, {int? maxResults}) {
     final document = parse(page);
     final trs =
         document.querySelectorAll('table.forumline.tablesorter tbody tr');
@@ -12,7 +15,9 @@ class SearchParser {
       throw SearchParserException('torrents block not found');
     }
     final result = <SearchParserResult>[];
-    for (var tr in trs) {
+    final length = min(maxResults ?? trs.length, trs.length);
+    for (var i = 0; i < length; i++) {
+      final tr = trs[i];
       final tds = tr.children;
       if (tds.length != 10) {
         throw SearchParserException('wrong torrent block format');
